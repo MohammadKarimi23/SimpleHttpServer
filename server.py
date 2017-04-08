@@ -2,6 +2,10 @@
 
 import socket
 import sys , getopt
+import os.path
+from wsgiref.handlers import format_date_time
+from datetime import datetime
+from time import mktime
 
 #def main(argv):
 #    port = ''
@@ -38,9 +42,10 @@ def server(port):
          #       print >>sys.stderr, 'received'
          #       print >>sys.stderr, '"%s"' % data
                 if data:
-                    parseMessage(data)
+                    uri = parseMessage(data)
+                    resp = createResponse(uri)
                     print >>sys.stderr, 'sending data back to the client'
-#               connection.sendall(data)
+                    connection.sendall(resp)
                 else:
                     print >>sys.stderr, 'no more data from', client_address
                     break
@@ -50,8 +55,43 @@ def server(port):
 def parseMessage(msg):
     print '\nparsing message\n'
     lines = msg.split("\n")
-    print lines[0].split(" ")[1]
+    return lines[0].split(" ")[1]
+
+def createResponse(path):
+    Status = ''
+    Server = 'Server: Mammads Server (Linux)'
+    now = datetime.now()
+    stamp = mktime(now.timetuple())
+    Date = format_date_time(stamp)
+    Connection = 'Connection: Closed'
+    response = ''
+    path = "." + path
+    Content_type = 'Content-Type: text/html'
+    Content_length = ''
+    Data = ''
+    status_code = 400
+
+    if os.path.exists(path):
+        status_code = 200
+        Status = 'HTTP/1.1 200 OK'
+        f = open(path)
+        Data = f.read()
+        Content_length = 'Content-Length: ' + str(len(Data))
+    else:
+        status_code = 400
+        Status = 'HTTP/1.1 404 Not Found'
+
+    response = Status + '\n\r'
+    response += Date + '\n\r'
+    response += Server + '\n\r'
+    if (status_code == 200): response += Content_length + '\n\r'
+    response += Connection + '\n\r'
+    if (status_code == 200):
+        response += Content_type + '\n\n'
+        response += Data
+
+    return response
 
 if __name__ == '__main__':
 #    main(sys.argv[1:])
-    server(1242)
+    server(1244)
