@@ -65,33 +65,40 @@ def createResponse(path):
     Date = format_date_time(stamp)
     Connection = 'Connection: Closed'
     response = ''
-    path = "." + path
     Content_type = 'Content-Type: text/html'
     Content_length = ''
     Data = ''
     status_code = 400
 
-    if os.path.exists(path):
-        status_code = 200
+    Data, status_code = parsePage(path)
+    Content_length = 'Content-Length: ' + str(len(Data))
+    if status_code == 200:
         Status = 'HTTP/1.1 200 OK'
-        f = open(path)
-        Data = f.read()
-        Content_length = 'Content-Length: ' + str(len(Data))
     else:
-        status_code = 400
         Status = 'HTTP/1.1 404 Not Found'
 
     response = Status + '\n\r'
     response += Date + '\n\r'
     response += Server + '\n\r'
-    if (status_code == 200): response += Content_length + '\n\r'
+    response += Content_length + '\n\r'
     response += Connection + '\n\r'
-    if (status_code == 200):
-        response += Content_type + '\n\n'
-        response += Data
-
+    response += Content_type + '\n\n'
+    response += Data
     return response
+
+def parsePage(path):
+    path = "." + path
+    res = ''
+    code = 0
+    if os.path.exists(path):
+        code = 200
+    else:
+        code = 404
+        path = "./404.html"
+    f = open(path)
+    res = f.read()
+    return res,code
 
 if __name__ == '__main__':
 #    main(sys.argv[1:])
-    server(1244)
+    server(1245)
